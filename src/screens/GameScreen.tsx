@@ -1,7 +1,16 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, Button, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Alert,
+  ScrollView
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import NumberContainer from '../components/NumberContainer';
+import MainButton from '../components/MainButton';
 import Card from '../components/Card';
+import BodyText from '../components/BodyText';
 import DefaultStyles from '../constants/default-styles';
 
 enum Direction {
@@ -25,18 +34,24 @@ const generateRandomBetween = (
   return rndNum === exclude ? generateRandomBetween(min, max, exclude) : rndNum;
 };
 
+const renderListItem = (value: number, numOfRound: number) => (
+  <View key={value} style={styles.listItem}>
+    <BodyText>#{numOfRound}</BodyText>
+    <BodyText>{value}</BodyText>
+  </View>
+);
+
 const GameScreen = (props: IGameScreenProps) => {
-  const [currentGuess, setCurrentGuess] = useState<number>(
-    generateRandomBetween(1, 100, props.userChoice)
-  );
-  const [rounds, setRounds] = useState<number>(0);
+  const initialGuess = generateRandomBetween(1, 100, props.userChoice);
+  const [currentGuess, setCurrentGuess] = useState<number>(initialGuess);
+  const [pastGuesses, setPastGuesses] = useState<number[]>([initialGuess]);
   const currentLow = useRef(1);
   const currentHigh = useRef(100);
   const { userChoice, onGameOver } = props;
 
   useEffect(() => {
-    if(currentGuess === props.userChoice){
-      onGameOver(rounds);
+    if (currentGuess === props.userChoice) {
+      onGameOver(pastGuesses.length);
     }
   }, [currentGuess, userChoice, onGameOver]);
 
@@ -48,14 +63,18 @@ const GameScreen = (props: IGameScreenProps) => {
       Alert.alert("Don't lie!", 'You know that is wrong...', [
         { text: 'Sorry', style: 'cancel' }
       ]);
-    } else if(direction === Direction.lower){
+    } else if (direction === Direction.lower) {
       currentHigh.current = currentGuess;
-    } else if(direction === Direction.greater){
-      currentLow.current = currentGuess;
+    } else if (direction === Direction.greater) {
+      currentLow.current = currentGuess + 1;
     }
-    const nextNumber = generateRandomBetween(currentLow.current, currentHigh.current, currentGuess);
+    const nextNumber = generateRandomBetween(
+      currentLow.current,
+      currentHigh.current,
+      currentGuess
+    );
     setCurrentGuess(nextNumber);
-    setRounds(curRounds => curRounds + 1);
+    setPastGuesses(currentPastGuessed => [nextNumber, ...currentPastGuessed]);
   };
 
   return (
@@ -63,15 +82,20 @@ const GameScreen = (props: IGameScreenProps) => {
       <Text style={DefaultStyles.bodyText}>Opponent's Guess</Text>
       <NumberContainer>{currentGuess}</NumberContainer>
       <Card style={styles.buttonContainer}>
-        <Button
-          title='Lower'
-          onPress={() => nextGuessHandler(Direction.lower)}
-        />
-        <Button
-          title='Greater'
-          onPress={() => nextGuessHandler(Direction.greater)}
-        />
+        <MainButton onPress={() => nextGuessHandler(Direction.lower)}>
+          <Ionicons name='md-remove' size={24} color='white' />
+        </MainButton>
+        <MainButton onPress={() => nextGuessHandler(Direction.greater)}>
+          <Ionicons name='md-add' size={24} color='white' />
+        </MainButton>
       </Card>
+      <View style={styles.listContainer}>
+        <ScrollView contentContainerStyle={styles.list}>
+          {pastGuesses.map((guess: number, index: number) =>
+            renderListItem(guess, pastGuesses.length - index)
+          )}
+        </ScrollView>
+      </View>
     </View>
   );
 };
@@ -86,8 +110,27 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     marginTop: 20,
-    width: 300,
-    maxWidth: '80%'
+    width: 400,
+    maxWidth: '90%'
+  },
+  listContainer: {
+    flex: 1,
+    width: '80%'
+  },
+  list: {
+    flexGrow: 1,
+    alignItems: 'center',
+    justifyContent: 'flex-end'
+  },
+  listItem: {
+    borderColor: '#ccc',
+    borderWidth: 1,
+    padding: 15,
+    marginVertical: 10,
+    backgroundColor: 'white',
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '60%'
   }
 });
 

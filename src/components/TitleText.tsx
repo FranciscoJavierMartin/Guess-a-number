@@ -7,11 +7,11 @@ interface ITitleTextProps {
 }
 
 const TitleText = (props:ITitleTextProps) => (
-  <Text style={{...styles.body, ...props.style}}>{props.children}</Text>
+  <Text style={{...styles.title, ...props.style}}>{props.children}</Text>
 )
 
 const styles = StyleSheet.create({
-  body: {
+  title: {
     fontFamily: 'open-sans-bold',
     fontSize: 18
   }
